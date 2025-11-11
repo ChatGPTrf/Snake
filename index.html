@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game - Gyro Control</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a3d2e, #1a7a5c, #2dbb8d);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+            overflow: hidden;
+            touch-action: none;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .header {
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            color: #e8f5e9;
+        }
+        
+        .score-container {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 12px 25px;
+            display: inline-block;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #e8f5e9;
+        }
+        
+        .game-area {
+            position: relative;
+            margin: 0 auto 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        #game-board {
+            border-radius: 15px;
+            background: linear-gradient(145deg, #0a3d2e, #0c4a38);
+            display: block;
+            margin: 0 auto;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .controls-info {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .control-modes {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+        
+        .control-mode {
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .control-mode.active {
+            background: #4CAF50;
+            box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4);
+        }
+        
+        .gyro-indicator {
+            margin-top: 15px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .gyro-fill {
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            border-radius: 5px;
+            transition: transform 0.1s;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 15px;
+            display: none;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+        }
+        
+        .game-over h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #ff5252;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .final-score {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #e8f5e9;
+        }
+        
+        button {
+            background: linear-gradient(145deg, #4CAF50, #45a049);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 1rem;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 6px 0 #2E7D32, 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #2E7D32, 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #2E7D32, 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            text-align: center;
+            color: #e8f5e9;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+            color: #e8f5e9;
+        }
+        
+        .permission-request {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 15px;
+            z-index: 20;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .permission-request p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .snake-segment {
+            position: absolute;
+            border-radius: 50%;
+            transition: all 0.2s ease-out;
+        }
+        
+        .food {
+            position: absolute;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #ff5252;
+            transition: all 0.3s ease-out;
+        }
+        
+        .swipe-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐍 Змейка</h1>
+            <div class="score-container">
+                <div class="score">Счет: <span id="score">0</span></div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <canvas id="game-board" width="400" height="400"></canvas>
+            
+            <div class="swipe-hint" id="swipe-hint">
+                Проведите пальцем для начала игры<br>
+                или используйте гироскоп
+            </div>
+            
+            <div class="game-over" id="game-over">
+                <h2>Игра окончена!</h2>
+                <div class="final-score">Ваш счет: <span id="final-score">0</span></div>
+                <button id="restart-btn">Играть снова</button>
+            </div>
+            
+            <div class="permission-request" id="permission-request">
+                <h3>Разрешите доступ к гироскопу</h3>
+                <p>Для управления наклонами устройства необходимо разрешить доступ к датчикам движения</p>
+                <button id="enable-gyro">Разрешить гироскоп</button>
+                <p style="margin-top: 15px; font-size: 0.9rem;">Или используйте управление свайпами</p>
+            </div>
+        </div>
+        
+        <div class="controls-info">
+            <p>Управление: <span id="control-mode-text">свайпы</span></p>
+            <div class="control-modes">
+                <div class="control-mode active" id="swipe-control">Свайпы</div>
+                <div class="control-mode" id="gyro-control">Гироскоп</div>
+            </div>
+            <div class="gyro-indicator" id="gyro-indicator">
+                <div class="gyro-fill" id="gyro-fill"></div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>Как играть:</h3>
+            <ul>
+                <li>Проводите пальцем по экрану или наклоняйте устройство</li>
+                <li>Собирайте красные яблоки, чтобы увеличить длину змейки</li>
+                <li>Избегайте столкновения со стенами и с самой собой</li>
+                <li>Каждое яблоко дает 10 очков</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram Web App
+        let tg;
+        try {
+            tg = window.Telegram.WebApp;
+            tg.expand();
+            tg.enableClosingConfirmation();
+        } catch (e) {
+            console.log("Telegram Web App не доступен, запуск в браузере");
+        }
+        
+        // Получаем элементы DOM
+        const canvas = document.getElementById('game-board');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const finalScoreElement = document.getElementById('final-score');
+        const gameOverElement = document.getElementById('game-over');
+        const restartBtn = document.getElementById('restart-btn');
+        const permissionRequest = document.getElementById('permission-request');
+        const enableGyroBtn = document.getElementById('enable-gyro');
+        const swipeControl = document.getElementById('swipe-control');
+        const gyroControl = document.getElementById('gyro-control');
+        const controlModeText = document.getElementById('control-mode-text');
+        const gyroFill = document.getElementById('gyro-fill');
+        const swipeHint = document.getElementById('swipe-hint');
+        
+        // Настройки игры
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+        let score = 0;
+        let gameRunning = false;
+        let controlMode = 'swipe'; // 'swipe' или 'gyro'
+        let gyroEnabled = false;
+        
+        // Позиция змейки
+        let snake = [
+            {x: 10, y: 10}
+        ];
+        
+        // Еда
+        let food = {
+            x: 5,
+            y: 5
+        };
+        
+        // Направление движения
+        let dx = 0;
+        let dy = 0;
+        
+        // Переменные для отслеживания свайпов
+        let touchStartX = 0;
+        let touchStartY = 0;
+        
+        // Переменные для гироскопа
+        let beta = 0; // Наклон вперед-назад (от -180 до 180)
+        let gamma = 0; // Наклон влево-вправо (от -90 до 90)
+        let gyroCalibration = { beta: 0, gamma: 0 };
+        
+        // Функция генерации случайной еды
+        function generateFood() {
+            food.x = Math.floor(Math.random() * tileCount);
+            food.y = Math.floor(Math.random() * tileCount);
+            
+            // Проверяем, не появилась ли еда на змейке
+            for (let segment of snake) {
+                if (segment.x === food.x && segment.y === food.y) {
+                    generateFood();
+                    break;
+                }
+            }
+        }
+        
+        // Функция отрисовки игры
+        function drawGame() {
+            // Очищаем canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем фон
+            const gradient = ctx.createRadialGradient(
+                canvas.width/2, canvas.height/2, 0,
+                canvas.width/2, canvas.height/2, canvas.width/2
+            );
+            gradient.addColorStop(0, '#0c4a38');
+            gradient.addColorStop(1, '#0a3d2e');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем еду (яблоко) с эффектом свечения
+            ctx.fillStyle = '#FF5252';
+            ctx.beginPath();
+            ctx.arc(
+                food.x * gridSize + gridSize / 2, 
+                food.y * gridSize + gridSize / 2, 
+                gridSize / 2 - 1, 
+                0, 
+                Math.PI * 2
+            );
+            ctx.fill();
+            
+            // Эффект свечения для еды
+            const glowGradient = ctx.createRadialGradient(
+                food.x * gridSize + gridSize / 2, 
+                food.y * gridSize + gridSize / 2, 
+                0,
+                food.x * gridSize + gridSize / 2, 
+                food.y * gridSize + gridSize / 2, 
+                gridSize
+            );
+            glowGradient.addColorStop(0, 'rgba(255, 82, 82, 0.6)');
+            glowGradient.addColorStop(1, 'rgba(255, 82, 82, 0)');
+            
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(
+                food.x * gridSize + gridSize / 2, 
+                food.y * gridSize + gridSize / 2, 
+                gridSize, 
+                0, 
+                Math.PI * 2
+            );
+            ctx.fill();
+            
+            // Рисуем змейку с плавными переходами
+            snake.forEach((segment, index) => {
+                if (index === 0) {
+                    // Голова змейки
+                    ctx.fillStyle = '#4CAF50';
+                    ctx.beginPath();
+                    ctx.arc(
+                        segment.x * gridSize + gridSize / 2, 
+                        segment.y * gridSize + gridSize / 2, 
+                        gridSize / 2 - 1, 
+                        0, 
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                    
+                    // Глаза змейки
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(
+                        segment.x * gridSize + gridSize / 2 - 4, 
+                        segment.y * gridSize + gridSize / 2 - 4, 
+                        2, 
+                        0, 
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.arc(
+                        segment.x * gridSize + gridSize / 2 + 4, 
+                        segment.y * gridSize + gridSize / 2 - 4, 
+                        2, 
+                        0, 
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                } else {
+                    // Тело змейки
+                    const progress = index / snake.length;
+                    const colorValue = Math.floor(120 + progress * 80);
+                    ctx.fillStyle = `rgb(76, ${colorValue}, 80)`;
+                    
+                    ctx.beginPath();
+                    ctx.arc(
+                        segment.x * gridSize + gridSize / 2, 
+                        segment.y * gridSize + gridSize / 2, 
+                        gridSize / 2 - 2, 
+                        0, 
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+            });
+        }
+        
+        // Функция обновления игры
+        function updateGame() {
+            if (!gameRunning) return;
+            
+            // Обновляем направление при использовании гироскопа
+            if (controlMode === 'gyro' && gyroEnabled) {
+                updateDirectionFromGyro();
+            }
+            
+            // Перемещаем змейку
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            snake.unshift(head);
+            
+            // Проверяем столкновение с едой
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                scoreElement.textContent = score;
+                generateFood();
+                
+                // Эффект при поедании еды
+                canvas.style.transform = 'scale(1.03)';
+                setTimeout(() => {
+                    canvas.style.transform = 'scale(1)';
+                }, 100);
+            } else {
+                snake.pop();
+            }
+            
+            // Проверяем столкновение со стенами
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                gameOver();
+                return;
+            }
+            
+            // Проверяем столкновение с собой
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            drawGame();
+        }
+        
+        // Обновление направления на основе данных гироскопа
+        function updateDirectionFromGyro() {
+            // Калибруем значения
+            const calibratedBeta = beta - gyroCalibration.beta;
+            const calibratedGamma = gamma - gyroCalibration.gamma;
+            
+            // Обновляем индикатор гироскопа
+            const gyroX = Math.max(-1, Math.min(1, calibratedGamma / 30));
+            gyroFill.style.transform = `translateX(${gyroX * 50}%)`;
+            
+            // Определяем направление на основе наклона
+            const sensitivity = 10;
+            
+            if (Math.abs(calibratedGamma) > Math.abs(calibratedBeta)) {
+                // Движение по горизонтали
+                if (calibratedGamma < -sensitivity && dx !== 1) {
+                    dx = -1;
+                    dy = 0;
+                } else if (calibratedGamma > sensitivity && dx !== -1) {
+                    dx = 1;
+                    dy = 0;
+                }
+            } else {
+                // Движение по вертикали
+                if (calibratedBeta > sensitivity && dy !== 1) {
+                    dx = 0;
+                    dy = -1;
+                } else if (calibratedBeta < -sensitivity && dy !== -1) {
+                    dx = 0;
+                    dy = 1;
+                }
+            }
+        }
+        
+        // Функция окончания игры
+        function gameOver() {
+            gameRunning = false;
+            finalScoreElement.textContent = score;
+            gameOverElement.style.display = 'flex';
+        }
+        
+        // Функция сброса игры
+        function resetGame() {
+            snake = [{x: 10, y: 10}];
+            score = 0;
+            scoreElement.textContent = score;
+            dx = 0;
+            dy = 0;
+            gameRunning = true;
+            generateFood();
+            gameOverElement.style.display = 'none';
+            swipeHint.style.opacity = '0';
+            drawGame();
+        }
+        
+        // Запрос разрешения на использование гироскопа
+        function requestGyroPermission() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            setupGyroControls();
+                            permissionRequest.style.display = 'none';
+                            gyroEnabled = true;
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Для браузеров, которые не требуют разрешения
+                setupGyroControls();
+                permissionRequest.style.display = 'none';
+                gyroEnabled = true;
+            }
+        }
+        
+        // Настройка обработчиков гироскопа
+        function setupGyroControls() {
+            window.addEventListener('deviceorientation', (event) => {
+                beta = event.beta; // Наклон вперед-назад
+                gamma = event.gamma; // Наклон влево-вправо
+                
+                // Калибруем при первом получении данных
+                if (gyroCalibration.beta === 0 && gyroCalibration.gamma === 0) {
+                    gyroCalibration.beta = beta;
+                    gyroCalibration.gamma = gamma;
+                }
+            });
+        }
+        
+        // Переключение режимов управления
+        swipeControl.addEventListener('click', () => {
+            controlMode = 'swipe';
+            swipeControl.classList.add('active');
+            gyroControl.classList.remove('active');
+            controlModeText.textContent = 'свайпы';
+            permissionRequest.style.display = 'none';
+        });
+        
+        gyroControl.addEventListener('click', () => {
+            controlMode = 'gyro';
+            gyroControl.classList.add('active');
+            swipeControl.classList.remove('active');
+            controlModeText.textContent = 'гироскоп';
+            
+            if (!gyroEnabled) {
+                permissionRequest.style.display = 'flex';
+            }
+        });
+        
+        enableGyroBtn.addEventListener('click', requestGyroPermission);
+        
+        // Обработчики событий для свайпов
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            
+            if (!gameRunning) {
+                gameRunning = true;
+                swipeHint.style.opacity = '0';
+            }
+        }, {passive: false});
+        
+        canvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, {passive: false});
+        
+        canvas.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            if (!touchStartX || !touchStartY || controlMode !== 'swipe') return;
+            
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+            
+            // Определяем направление свайпа
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // Горизонтальный свайп
+                if (diffX > 0 && dx !== 1) {
+                    // Свайп влево
+                    dx = -1;
+                    dy = 0;
+                } else if (diffX < 0 && dx !== -1) {
+                    // Свайп вправо
+                    dx = 1;
+                    dy = 0;
+                }
+            } else {
+                // Вертикальный свайп
+                if (diffY > 0 && dy !== 1) {
+                    // Свайп вверх
+                    dx = 0;
+                    dy = -1;
+                } else if (diffY < 0 && dy !== -1) {
+                    // Свайп вниз
+                    dx = 0;
+                    dy = 1;
+                }
+            }
+            
+            touchStartX = null;
+            touchStartY = null;
+        }, {passive: false});
+        
+        // Обработчик кнопки перезапуска
+        restartBtn.addEventListener('click', resetGame);
+        
+        // Обработчики для клавиатуры (для тестирования на ПК)
+        document.addEventListener('keydown', function(e) {
+            if (!gameRunning) return;
+            
+            switch(e.key) {
+                case 'ArrowUp':
+                    if (dy !== 1) {
+                        dx = 0;
+                        dy = -1;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (dy !== -1) {
+                        dx = 0;
+                        dy = 1;
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (dx !== 1) {
+                        dx = -1;
+                        dy = 0;
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (dx !== -1) {
+                        dx = 1;
+                        dy = 0;
+                    }
+                    break;
+            }
+        });
+        
+        // Запуск игры
+        generateFood();
+        drawGame();
+        
+        // Игровой цикл
+        let lastTime = 0;
+        const gameSpeed = 120; // миллисекунд между обновлениями
+        
+        function gameLoop(timestamp) {
+            if (timestamp - lastTime > gameSpeed) {
+                updateGame();
+                lastTime = timestamp;
+            }
+            requestAnimationFrame(gameLoop);
+        }
+        
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
