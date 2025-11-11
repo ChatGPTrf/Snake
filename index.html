@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pepe Clicker Dress-up</title>
+  <style>
+    :root{--bg:#f3f6fb;--card:#ffffff;--accent:#2563eb}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:var(--bg);margin:0;padding:20px;display:flex;justify-content:center}
+    .wrap{width:980px; max-width:100%; display:grid; grid-template-columns:360px 1fr; gap:20px}
+    .card{background:var(--card); border-radius:12px; padding:16px; box-shadow:0 6px 18px rgba(15,23,42,0.08)}
+    .avatar-area{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .avatar-box{width:320px;height:320px; position:relative; border-radius:12px; background:linear-gradient(180deg,#fff,#eef6ff); display:flex;align-items:center;justify-content:center; overflow:visible}
+    .avatar-base{max-width:92%; max-height:92%; display:block; user-select:none; pointer-events:none}
+    .layer-img{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:92%; height:auto; display:none; pointer-events:none}
+    .controls{display:flex;gap:8px}
+    button{cursor:pointer;padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:white}
+    .muted{background:#efefef;color:#333}
+    .shop-list{display:flex;flex-direction:column;gap:8px}
+    .shop-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:#fbfbff}
+    .inventory-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .inv-item{padding:8px;border-radius:8px;background:#fff;border:1px solid #eee;display:flex;gap:8px;align-items:center}
+    .statbar{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+    .big{font-size:22px;font-weight:700}
+    .small{font-size:13px;color:#555}
+    .coin{background:linear-gradient(180deg,#fffaeb,#fff5d6);padding:6px 10px;border-radius:999px}
+    .klink{background:linear-gradient(180deg,#e6fffa,#dffbf5);padding:6px 10px;border-radius:999px;color:#065f46}
+    .center{display:flex;justify-content:center;align-items:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- ЛЕВАЯ: аватар + кликер -->
+    <div class="card avatar-area">
+      <div class="statbar" style="width:100%;justify-content:space-between">
+        <div>
+          <div class="small">Коины</div>
+          <div id="coins" class="big">0</div>
+        </div>
+        <div>
+          <div class="small">Клинкер</div>
+          <div id="clinker" class="big">0</div>
+        </div>
+      </div>
+
+      <div class="avatar-box" id="avatarBox" title="Кликни по Пепе, чтобы заработать коины">
+        <img id="baseImg" class="avatar-base" src="pepe_cropped.png" alt="Pepe"/>
+        <img id="glassesLayer" class="layer-img" src="pepe_glasses.png" alt="glasses"/>
+        <img id="jacketLayer"  class="layer-img" src="pepe_jacket.png" alt="jacket"/>
+        <img id="shoesLayer"   class="layer-img" src="pepe_shoes.png" alt="shoes"/>
+      </div>
+
+      <div class="controls" style="width:100%;justify-content:space-between">
+        <button id="clickerBtn">Кликать +1</button>
+        <button id="autoBtn" class="muted">Автокликер (x/sec) OFF</button>
+      </div>
+
+      <div style="width:100%;margin-top:8px">
+        <div class="small">Текущий множитель клика: <span id="clickMult">1</span>×</div>
+        <div class="small">Нажатием по Пепе получаешь коины. Покупай вещи в магазине и надевай их.</div>
+      </div>
+
+      <div style="width:100%;margin-top:12px;display:flex;gap:8px;justify-content:space-between">
+        <button id="earnTest" class="muted">+200 коины (тест)</button>
+        <button id="resetBtn" class="muted">Сброс</button>
+      </div>
+    </div>
+
+    <!-- ПРАВАЯ: магазин + инвентарь -->
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <h3>Магазин</h3>
+        <div class="shop-list" id="shopList"></div>
+      </div>
+
+      <div class="card">
+        <h3>Инвентарь</h3>
+        <div id="inventoryList" class="inventory-list"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ========== ДАННЫЕ ========== */
+const SHOP = [
+  {id:'glasses', name:'Очки стильные', price:80, klink:0, desc:'+0.5 к клику если надеть'},
+  {id:'jacket',  name:'Пиджак модный', price:180, klink:1, desc:'+1 к клику и +0.2 автоклик'},
+  {id:'shoes',   name:'Туфли лаковые', price:120, klink:0, desc:'+0.3 к клику'}
+];
+
+const LS = { coins:'pepe_coins_v2', klink:'pepe_klink_v2', inv:'pepe_inv_v2', eq:'pepe_eq_v2', clickMult:'pepe_click_mult_v2', autoRate:'pepe_auto_rate_v2' };
+
+/* ========== ИНИЦИАЛИЗАЦИЯ ========== */
+let coins = parseInt(localStorage.getItem(LS.coins) || '300',10);
+let klink = parseInt(localStorage.getItem(LS.klink) || '2',10);
+let inventory = JSON.parse(localStorage.getItem(LS.inv) || '[]'); // ids
+let equipped = JSON.parse(localStorage.getItem(LS.eq) || '{}'); // {id:true}
+let clickBase = parseFloat(localStorage.getItem(LS.clickMult) || '1');
+let autoRate = parseFloat(localStorage.getItem(LS.autoRate) || '0'); // коины/sec
+
+/* ========== DOM ========== */
+const coinsEl = document.getElementById('coins');
+const klinkEl = document.getElementById('clinker');
+const shopList = document.getElementById('shopList');
+const inventoryList = document.getElementById('inventoryList');
+
+const baseImg = document.getElementById('baseImg');
+const layers = {
+  glasses: document.getElementById('glassesLayer'),
+  jacket:  document.getElementById('jacketLayer'),
+  shoes:   document.getElementById('shoesLayer')
+};
+
+const avatarBox = document.getElementById('avatarBox');
+const clickerBtn = document.getElementById('clickerBtn');
+const autoBtn = document.getElementById('autoBtn');
+const clickMultLabel = document.getElementById('clickMult');
+const earnTest = document.getElementById('earnTest');
+const resetBtn = document.getElementById('resetBtn');
+
+/* ========== UI РЕНДЕР ========== */
+function updateCurrency(){
+  coinsEl.textContent = coins;
+  klinkEl.textContent = klink;
+  localStorage.setItem(LS.coins, coins);
+  localStorage.setItem(LS.klink, klink);
+}
+
+function renderShop(){
+  shopList.innerHTML = '';
+  SHOP.forEach(it=>{
+    const owned = inventory.includes(it.id);
+    const div = document.createElement('div');
+    div.className = 'shop-item';
+    div.innerHTML = `
+      <div>
+        <div style="font-weight:600">${it.name}</div>
+        <div style="font-size:13px;color:#555">${it.desc}</div>
+        <div style="font-size:13px;color:#444;margin-top:6px">${it.price} коины ${it.klink?('+ '+it.klink+' клинкер'):''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="buy">${owned ? 'Куплено' : 'Купить'}</button>
+        <button class="preview muted">Примерить</button>
+      </div>
+    `;
+    const buyBtn = div.querySelector('.buy');
+    const previewBtn = div.querySelector('.preview');
+    if(owned){ buyBtn.disabled=true; buyBtn.style.background='#ddd'; buyBtn.style.color='#333' }
+    buyBtn.addEventListener('click', ()=> buyItem(it.id));
+    previewBtn.addEventListener('click', ()=> previewItem(it.id));
+    shopList.appendChild(div);
+  });
+}
+
+function renderInventory(){
+  inventoryList.innerHTML = '';
+  if(inventory.length===0){ inventoryList.innerHTML='<div style="color:#666">Инвентарь пуст</div>'; return;}
+  inventory.forEach(id=>{
+    const it = SHOP.find(s=>s.id===id);
+    const isEq = !!equipped[id];
+    const el = document.createElement('div');
+    el.className = 'inv-item';
+    el.innerHTML = `
+      <div style="min-width:34px;text-align:center">${emojiFor(id)}</div>
+      <div style="min-width:160px">
+        <div style="font-weight:600">${it.name}</div>
+        <div style="font-size:12px;color:#666">${it.desc}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button class="equip" style="background:${isEq? '#ef4444':'#10b981'};color:white;padding:6px 8px;border-radius:8px">${isEq?'Снять':'Надеть'}</button>
+        <button class="sell" style="background:#ddd;padding:6px 8px;border-radius:8px">Продать</button>
+      </div>
+    `;
+    el.querySelector('.equip').addEventListener('click', ()=> toggleEquip(id));
+    el.querySelector('.sell').addEventListener('click', ()=> sellItem(id));
+    inventoryList.appendChild(el);
+  });
+}
+
+function emojiFor(id){ if(id==='glasses') return '👓'; if(id==='jacket') return '🧥'; if(id==='shoes') return '👞'; return '❓' }
+
+/* ========== ЛОГИКА ПОКУПКИ / ИНВЕНТАРЬ ========== */
+function buyItem(id){
+  const it = SHOP.find(s=>s.id===id);
+  if(!it) return;
+  if(inventory.includes(id)){ alert('Уже куплено'); return; }
+  if(coins < it.price || klink < it.klink){ alert('Недостаточно средств'); return; }
+  if(!confirm(`Купить "${it.name}" за ${it.price} коины${it.klink?(' + '+it.klink+' клинкер'):''}?`)) return;
+  coins -= it.price; klink -= it.klink;
+  inventory.push(id);
+  saveState();
+  updateCurrency(); renderShop(); renderInventory();
+  alert('Куплено!');
+}
+
+function previewItem(id){
+  showLayer(id,true);
+  setTimeout(()=>{ if(!equipped[id]) showLayer(id,false); }, 1500);
+}
+
+function toggleEquip(id){
+  if(!inventory.includes(id)){ alert('У вас нет этого предмета'); return;}
+  if(equipped[id]){ delete equipped[id]; showLayer(id,false); }
+  else { equipped[id]=true; showLayer(id,true); }
+  recalcClick(); saveState(); renderInventory();
+}
+
+function sellItem(id){
+  if(!inventory.includes(id)) return;
+  const it = SHOP.find(s=>s.id===id);
+  if(!confirm(`Продать ${it.name} за ${Math.floor(it.price/2)} коины?`)) return;
+  coins += Math.floor(it.price/2);
+  inventory = inventory.filter(x=>x!==id);
+  delete equipped[id];
+  recalcClick(); saveState(); updateCurrency(); renderShop(); renderInventory();
+}
+
+/* ========== СЛОИ ========== */
+function showLayer(id, show){
+  const el = layers[id];
+  if(!el) return;
+  el.style.display = show ? 'block' : 'none';
+}
+
+/* ========== КЛИКЕР ========== */
+function recalcClick(){
+  // base + equipped bonuses
+  let mult = clickBase;
+  if(equipped['glasses']) mult += 0.5;
+  if(equipped['jacket']) mult += 1.0;
+  if(equipped['shoes']) mult += 0.3;
+  clickMultLabel.textContent = mult.toFixed(2);
+  localStorage.setItem(LS.clickMult, clickBase);
+}
+recalcClick();
+
+function doClick(){
+  const mult = parseFloat(clickMultLabel.textContent) || 1;
+  const gain = Math.round(1 * mult * 10) / 10; // keep decimals
+  coins = Math.round((coins + gain) * 10) / 10;
+  // store coins as integer if possible
+  if(Number.isInteger(coins)) coins = Math.floor(coins);
+  updateCurrency();
+  // simple click animation
+  avatarBox.animate([{transform:'scale(1)'},{transform:'scale(0.97)'},{transform:'scale(1)'}], {duration:180,iterations:1});
+}
+
+avatarBox.addEventListener('click', doClick);
+clickerBtn.addEventListener('click', doClick);
+
+/* Автокликер — генерирует коины в секунду (можно улучшать) */
+let autoInterval = null;
+function setAutoRate(rate){
+  autoRate = rate;
+  localStorage.setItem(LS.autoRate, autoRate);
+  if(autoInterval) clearInterval(autoInterval);
+  if(autoRate > 0){
+    autoInterval = setInterval(()=>{ coins += autoRate; updateCurrency(); }, 1000);
+    autoBtn.textContent = `Автокликер ON +${autoRate}/с`;
+    autoBtn.style.background = '#f59e0b';
+  } else {
+    autoBtn.textContent = 'Автокликер (x/sec) OFF';
+    autoBtn.style.background = '#9ca3af';
+  }
+}
+autoBtn.addEventListener('click', ()=>{
+  if(autoRate>0) setAutoRate(0);
+  else setAutoRate( Math.round((clickBase*0.2)*10)/10 ); // включаем небольшой автокликер из базового множителя
+});
+
+/* ========== СОХРАНЕНИЕ ========== */
+function saveState(){
+  localStorage.setItem(LS.inv, JSON.stringify(inventory));
+  localStorage.setItem(LS.eq, JSON.stringify(equipped));
+}
+
+document.getElementById('earnTest').addEventListener('click', ()=>{ coins += 200; updateCurrency(); });
+resetBtn.addEventListener('click', ()=>{
+  if(!confirm('Сбросить локальное состояние?')) return;
+  coins=300; klink=2; inventory=[]; equipped={}; clickBase=1; autoRate=0;
+  localStorage.clear();
+  saveState(); updateCurrency(); renderShop(); renderInventory(); Object.values(layers).forEach(l=>l.style.display='none'); setAutoRate(0);
+});
+
+/* ========== ИНИЦИАЛИЗАЦИЯ UI ========== */
+function init(){
+  updateCurrency(); renderShop(); renderInventory();
+  // показать надетые слои
+  Object.keys(equipped).forEach(k => { if(equipped[k]) showLayer(k,true); });
+  setAutoRate(autoRate);
+  recalcClick();
+}
+init();
+</script>
+</body>
+</html>
+
