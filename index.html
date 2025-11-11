@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathClass - Онлайн занятия по математике</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .logo span {
+            color: #667eea;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        /* Homework Section */
+        .homework-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 24px;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #667eea;
+        }
+
+        /* Homework Form */
+        .homework-form {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 2px dashed #cbd5e0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4a5568;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+        }
+
+        /* Homework List */
+        .homework-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .homework-item {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .homework-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+
+        .homework-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .homework-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .homework-date {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .homework-description {
+            color: #4a5568;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .homework-answer {
+            margin-top: 15px;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .submit-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .submit-btn:hover {
+            background: #38a169;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stats {
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 48px;
+            color: #48bb78;
+            margin-bottom: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">Math<span>Class</span></div>
+            <div class="user-info">
+                <div class="avatar" id="userAvatar">У</div>
+                <div>
+                    <div id="userName">Учитель Математики</div>
+                    <div id="userRole" style="color: #718096; font-size: 14px;">Преподаватель</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Homework Section -->
+            <div class="homework-section">
+                <h2 class="section-title">
+                    📚 Домашние задания
+                </h2>
+
+                <!-- Homework Form (for teachers) -->
+                <div class="homework-form" id="teacherSection">
+                    <h3 style="margin-bottom: 15px; color: #2d3748;">Добавить новое задание</h3>
+                    <div class="form-group">
+                        <label for="homeworkTitle">Название задания:</label>
+                        <input type="text" id="homeworkTitle" placeholder="Например: Решение квадратных уравнений">
+                    </div>
+                    <div class="form-group">
+                        <label for="homeworkSubject">Предмет:</label>
+                        <select id="homeworkSubject">
+                            <option value="math">Математика</option>
+                            <option value="algebra">Алгебра</option>
+                            <option value="geometry">Геометрия</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="homeworkDescription">Описание задания:</label>
+                        <textarea id="homeworkDescription" placeholder="Опишите задание подробно..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="homeworkDeadline">Срок выполнения:</label>
+                        <input type="date" id="homeworkDeadline">
+                    </div>
+                    <button class="btn" onclick="addHomework()">📤 Опубликовать задание</button>
+                </div>
+
+                <!-- Homework List -->
+                <div class="homework-list" id="homeworkList">
+                    <!-- Homework items will be added here dynamically -->
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="stats">
+                    <h3 style="margin-bottom: 15px; color: #2d3748;">📊 Статистика класса</h3>
+                    <div class="stat-item">
+                        <span>Всего заданий:</span>
+                        <span class="stat-value" id="totalHomeworks">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Выполнено:</span>
+                        <span class="stat-value" id="completedHomeworks">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Средний балл:</span>
+                        <span class="stat-value" id="averageGrade">-</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 15px; color: #2d3748;">🎯 Активные задания</h3>
+                    <div id="activeHomeworks">
+                        <!-- Active homeworks will be shown here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="success-icon">✅</div>
+            <h3 style="margin-bottom: 10px; color: #2d3748;">Задание успешно добавлено!</h3>
+            <p style="color: #718096; margin-bottom: 20px;">Ученики увидят его в своем списке заданий.</p>
+            <button class="btn" onclick="closeModal()">Понятно</button>
+        </div>
+    </div>
+
+    <script>
+        // Sample data
+        let homeworks = JSON.parse(localStorage.getItem('homeworks')) || [];
+        let userRole = 'teacher'; // Change to 'student' for student view
+
+        // Initialize the page
+        function initPage() {
+            updateHomeworkList();
+            updateStats();
+            setupUserView();
+        }
+
+        // Add new homework
+        function addHomework() {
+            const title = document.getElementById('homeworkTitle').value;
+            const subject = document.getElementById('homeworkSubject').value;
+            const description = document.getElementById('homeworkDescription').value;
+            const deadline = document.getElementById('homeworkDeadline').value;
+
+            if (!title || !description) {
+                alert('Пожалуйста, заполните все обязательные поля');
+                return;
+            }
+
+            const newHomework = {
+                id: Date.now(),
+                title,
+                subject,
+                description,
+                deadline,
+                createdAt: new Date().toLocaleDateString('ru-RU'),
+                answers: [],
+                completed: false
+            };
+
+            homeworks.unshift(newHomework);
+            localStorage.setItem('homeworks', JSON.stringify(homeworks));
+            
+            updateHomeworkList();
+            updateStats();
+            clearForm();
+            showModal();
+        }
+
+        // Update homework list
+        function updateHomeworkList() {
+            const homeworkList = document.getElementById('homeworkList');
+            homeworkList.innerHTML = '';
+
+            homeworks.forEach(homework => {
+                const homeworkItem = document.createElement('div');
+                homeworkItem.className = 'homework-item';
+                
+                homeworkItem.innerHTML = `
+                    <div class="homework-header">
+                        <div class="homework-title">${homework.title}</div>
+                        <div class="homework-date">${homework.createdAt}</div>
+                    </div>
+                    <div class="homework-description">${homework.description}</div>
+                    <div style="color: #718096; font-size: 14px; margin-bottom: 10px;">
+                        📅 Срок: ${homework.deadline || 'Не указан'} | 
+                        📚 ${getSubjectName(homework.subject)}
+                    </div>
+                    ${userRole === 'student' ? `
+                        <div class="homework-answer">
+                            <input type="text" class="answer-input" placeholder="Введите ваш ответ..." id="answer-${homework.id}">
+                            <button class="submit-btn" onclick="submitAnswer(${homework.id})">📤 Отправить ответ</button>
+                        </div>
+                    ` : `
+                        <div style="color: #718096; font-size: 14px;">
+                            👥 Ответов: ${homework.answers.length}
+                        </div>
+                    `}
+                `;
+                
+                homeworkList.appendChild(homeworkItem);
+            });
+        }
+
+        // Submit answer (for students)
+        function submitAnswer(homeworkId) {
+            const answerInput = document.getElementById(`answer-${homeworkId}`);
+            const answer = answerInput.value.trim();
+
+            if (!answer) {
+                alert('Пожалуйста, введите ваш ответ');
+                return;
+            }
+
+            const homework = homeworks.find(hw => hw.id === homeworkId);
+            if (homework) {
+                homework.answers.push({
+                    student: 'Ученик',
+                    answer: answer,
+                    date: new Date().toLocaleString('ru-RU'),
+                    grade: null
+                });
+                homework.completed = true;
+                
+                localStorage.setItem('homeworks', JSON.stringify(homeworks));
+                updateStats();
+                alert('✅ Ваш ответ отправлен учителю!');
+                answerInput.value = '';
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalHomeworks').textContent = homeworks.length;
+            const completed = homeworks.filter(hw => hw.completed).length;
+            document.getElementById('completedHomeworks').textContent = completed;
+        }
+
+        // Setup user view based on role
+        function setupUserView() {
+            const teacherSection = document.getElementById('teacherSection');
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+            const userRoleElem = document.getElementById('userRole');
+
+            if (userRole === 'student') {
+                teacherSection.style.display = 'none';
+                userAvatar.textContent = 'У';
+                userName.textContent = 'Ученик';
+                userRoleElem.textContent = 'Ученик';
+            } else {
+                teacherSection.style.display = 'block';
+                userAvatar.textContent = 'У';
+                userName.textContent = 'Учитель Математики';
+                userRoleElem.textContent = 'Преподаватель';
+            }
+        }
+
+        // Helper functions
+        function getSubjectName(subject) {
+            const subjects = {
+                'math': 'Математика',
+                'algebra': 'Алгебра',
+                'geometry': 'Геометрия'
+            };
+            return subjects[subject] || subject;
+        }
+
+        function clearForm() {
+            document.getElementById('homeworkTitle').value = '';
+            document.getElementById('homeworkDescription').value = '';
+            document.getElementById('homeworkDeadline').value = '';
+        }
+
+        function showModal() {
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+
+        // Add some sample homeworks on first load
+        if (homeworks.length === 0) {
+            homeworks = [
+                {
+                    id: 1,
+                    title: "Решение квадратных уравнений",
+                    subject: "algebra",
+                    description: "Решите следующие квадратные уравнения:\n1) x² - 5x + 6 = 0\n2) 2x² + 3x - 2 = 0\n3) x² - 4x + 4 = 0",
+                    deadline: "2024-12-15",
+                    createdAt: "10.12.2024",
+                    answers: [],
+                    completed: false
+                },
+                {
+                    id: 2,
+                    title: "Задачи по геометрии",
+                    subject: "geometry",
+                    description: "Решите задачи:\n1) Найдите площадь треугольника со сторонами 5, 6, 7 см\n2) Вычислите объем прямоугольного параллелепипеда со сторонами 3, 4, 5 см",
+                    deadline: "2024-12-20",
+                    createdAt: "08.12.2024",
+                    answers: [],
+                    completed: false
+                }
+            ];
+            localStorage.setItem('homeworks', JSON.stringify(homeworks));
+        }
+
+        // Initialize the page when loaded
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+</html>
